@@ -1,0 +1,109 @@
+URLDIFF(1)                 User Manual                        URLDIFF(1)
+
+NAME
+       urldiff - notify and watch changes on websites
+
+SYNOPSIS
+       urldiff (-h|-v) (-nv|-nv|-q) [-m]
+
+REQUIREMENT
+       awk, bash, cmp, cp, diff, find, mailx, md5sum, mkdir, mv, ping,
+       rename, rm, sed, tput, w3m, wget, xargs
+
+OPTIONAL
+       dwdiff, wdiff
+
+DESCRIPTION
+       urldiff is a simple bash shell script to notify and watch changes
+       on websites, that do not provide Atom or RSS-Feed. After reading
+       an url list, downloading and comparision of "local" and "online"
+       a little status report will be
+       generated. The status is constructed like this:
+
+       FAIL 2014-02-12_15:43 URL: $url unattainable
+       FAIL 2014-02-12_15:43 URL: $url does not match
+       NEW 2014-02-12_15:43 URL: $url
+        file://${urldiff}/diff/53e4a875ad5c7ea306cccf991f2768f7_diff.txt
+        file://${urldiff}/cache/53e4a875ad5c7ea306cccf991f2768f7.html
+        file://${urldiff}/cache/53e4a875ad5c7ea306cccf991f2768f7.txt
+       OLD 2014-02-12_15:43 URL: $url
+
+       urldiff is an adaption of the activity-monitor. See
+       <https://github.com/cmichi/activity-monitor> for details.
+
+OPTIONS
+       -h, -help
+              Display a short help.
+
+       -m, -mail [MAILTO...]
+              Send Report via mail to MAILTO. If MAILTO is not specified,
+              the configuration variable mailto will be used.
+
+       -nv, -no-verbose
+              Turn off verbose output without being completely quiet.
+
+       -q, -quiet
+              Turn off output.
+
+       -vb, -verbose
+              Turn on verbose output. By default, this option is used.
+
+       -v, -version
+              Print current version of urldiff.
+
+ARGUMENTS
+       MAILTO Something like: user@example.org
+
+EXAMPLES
+       To print Report:
+              urldiff
+              urldiff -nv
+
+       To only mail the Report:
+              urldiff -q -m
+              urldiff -q -m user1@example.foo user2@example.foo
+
+       To do both:
+              urldiff -vb -m
+
+RETURN VALUES
+       1      ERROR We are probably offline.
+
+       2      ERROR No url list to look for.
+
+NOTES
+       ·   You can write all commands and options without masking -. So,
+           instead of -help you may use help.
+
+       ·   Urls in the url list need to be seperated by newline.
+
+       ·   To check the connection status, <startpage.com> will be
+           pinged. If you do not like it, modify it please.
+
+CONFIGURATION
+       Set following variables in the second section of the script:
+              urldiffdir=DIR (needed)
+              urllist=FILE (needed)
+              mailto=<MAILTO> (optional)
+
+       Configure your favourite diff-programm in the function called
+       _diff().
+
+BUGS & REQUESTS
+       Report it on <https://github.com/D630/urldiff>
+
+TODO
+       ·   Revise mechanism to get html-body.
+
+LICENSE
+       See file LICENCE, which comes along with this software.
+
+CHRONOLOGY
+       First version (0.1.0.0) was finished on 12. February 2014.
+
+SEE ALSO
+       awk(1), bash(1), cmp(1), cp(1), diff(1), dwdiff(1), find(1),
+       mailx(1), md5sum(1), mkdir(1), mv(1), ping(1), rename(1), rm(1),
+       sed(1), tput(1), w3m(1), wdiff(1), wget(1), xargs(1)
+
+0.1.0.0                      2014-02-12                       URLDIFF(1)
