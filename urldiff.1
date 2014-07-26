@@ -1,8 +1,8 @@
-.\" Manpage of urldiff/v0.1.0.0
+.\" Manpage of urldiff/v0.1.1.0
 .\" written with GNU Emacs/v24.3.1 and markdown-mode/v1.8.1
 .\" generated with Ronn/v0.7.3
 .
-.TH "URLDIFF" "1" "2014-02-12" "0.1.0.0" "User Manual"
+.TH "URLDIFF" "1" "2014-07-26" "0.1.1.0" "User Manual"
 .
 .SH "NAME"
 \fBurldiff\fR \- notify and watch changes on websites
@@ -90,11 +90,11 @@ urldiff \-vb \-m
 .SH "RETURN VALUES"
 .
 .TP
-1
+79
 ERROR We are probably offline\.
 .
 .TP
-2
+80
 ERROR No url list to look for\.
 .
 .SH "NOTES"
@@ -106,7 +106,7 @@ You can write all commands and options without masking \fB\-\fR\. So, instead of
 Urls in the url list need to be seperated by newline.
 .
 .IP "\(bu" 4
-To check the connection status, \fB<startpage\.com>\fR will be pinged\. If you do not like it, modify it please\.
+To check the connection status, \fB<google\.com>\fR will be pinged\. If you do not like that, modify it please\.
 .
 .IP "" 0
 .
@@ -121,7 +121,7 @@ Set following variables in the second section of the script:
 \fBmailto=<MAILTO>\fR (optional)
 .
 .TP
-Configure your favourite diff\-programm in the function called \fB_diff()\fR\.
+Configure your favourite diff\-programm in the function called \fB__urldiff_diff()\fR\.
 
 .
 .SH "BUGS & REQUESTS"

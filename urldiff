@@ -25,80 +25,37 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# --- Config
+# -- DEBUGGING.
 
-urldiffdir=$HOME/.urldiff
-urllist=${urldiffdir}/urls.txt
-mailto=user1@example.org
+#printf '%s (%s)\n' "$BASH_VERSION" "${BASH_VERSINFO[5]}" && exit 0
+#set -o xtrace #; exec 2>> ~/urldiff.log
+#set -o verbose
+#set -o noexec
+#set -o errexit
+#set -o nounset
+#set -o pipefail
+#trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
+
+# -- SETTINGS.
+
+#declare vars_base=$(set -o posix ; set)
+
+# --- CONFIG.
+
+declare -r urldiffdir=${XDG_DATA_HOME:-${HOME}/.local/share}/urldiff
+declare -r urllist=${urldiffdir}/urls.txt
+declare -r mailto=urldiff@urldiff
 
 # Do not change this variables without looking in the code.
-reportnew=${urldiffdir}/report_new.txt
-reportold=${urldiffdir}/report.txt
-export cachedir=${urldiffdir}/cache diffdir=${urldiffdir}/diff
+declare -r \
+            reportnew=${urldiffdir}/report_new.txt \
+            reportold=${urldiffdir}/report.txt
 
-# --- Function
+# --- FUNCTIONS.
 
-_diff()
-{
-    diff -U 0 -iEZbwB "$localascii" "$onlineascii" > "$difftxt"
-    #dwdiff -1 --aggregate-changes --wdiff-output "$localascii" "$onlineascii" > "$difftxt"
-    #wdiff -1 "$localascii" "$onlineascii" > "$difftxt"
-}
+__urldiff_version() { echo "0.1.1.0" ; }
 
-_check()
-{
-    url=$1
-
-    # Select only non-commented lines from url list.
-    reg="#*"
-    [[ $url = $reg ]] && return 1
-
-    if [[ $url =~ http(s|)://*.* ]]
-    then
-        read -r tmpfilename _ < <(md5sum <<< "$url")
-        localhtml=${cachedir}/${tmpfilename}.html
-        onlinehtml=${cachedir}/${tmpfilename}_new.html
-        localascii=${cachedir}/${tmpfilename}.txt
-        onlineascii=${cachedir}/${tmpfilename}_new.txt
-        difftxt=${diffdir}/${tmpfilename}_diff.txt
-
-        # Get html (only body) via wget and awk.
-         awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' < <(wget $output -T 10 --no-http-keep-alive --no-cache --no-cookies --ignore-length --content-on-error -L -E -O - "$url") > "$onlinehtml"
-
-        # If download has been successfull, convert html into text via w3m.
-        if [[ -s $onlinehtml ]]
-        then
-            w3m -dump -T text/html > "$onlineascii" < "$onlinehtml"
-        else
-            rm "$onlinehtml"
-            { printf '%s\n' "FAIL $(date +%Y-%m-%d_%H:%M) URL: ${url} unattainable" >&3 ; return 1 ; }
-        fi
-
-        # Prepare files from last session.
-        [[ ! -e $localhtml ]] && { cp "$onlinehtml" "$localhtml" ; }
-        [[ ! -e $localascii ]] && { cp "$onlineascii" "$localascii" ; }
-
-        # If there is a difference between "online-file" and "local-file",
-        # make a detailed diff. In either case make a status update.
-        if ! cmp -s "$onlineascii" "$localascii"
-        then
-            _diff
-            { printf '%s\n' "NEW $(date +%Y-%m-%d_%H:%M) URL: ${url}" "    file://${difftxt}"  "    file://${localhtml}" "    file://${localascii}" ; } >&3
-        else
-            printf '%s\n' "OLD $(date +%Y-%m-%d_%H:%M) URL: ${url}" >&3
-        fi
-
-        # In the end cleaning up.
-        rm "$localhtml" "$localascii"
-        mv "$onlinehtml" "$localhtml"
-        mv "$onlineascii" "$localascii"
-
-    else
-        { printf '%s\n' "FAIL $(date +%Y-%m-%d_%H:%M) URL: ${url} does not match" >&3 ; return 1 ; }
-    fi
-}
-
-_help()
+__urldiff_help()
 {
     printf "urldiff (-h|-v) (-nv|-nv|-q) [-m]
 
@@ -119,52 +76,130 @@ ARGUMENTS
 "
 }
 
-export -f _check _diff
+__urldiff_diff()
+{
+    diff -U 0 -iEZbwB "$localascii" "$onlineascii" > "$difftxt"
+    #dwdiff -1 --aggregate-changes --wdiff-output "$localascii" "$onlineascii" > "$difftxt"
+    #wdiff -1 "$localascii" "$onlineascii" > "$difftxt"
+}
 
-# --- Main
+__urldiff_check()
+{
+    declare \
+            _= \
+            difftxt= \
+            localascii= \
+            localhtml= \
+            onlineascii= \
+            onlinehtml= \
+            reg="#*" \
+            tmpfilename= \
+            url=$1
+
+    # Select only non-commented lines from url list.
+    [[ $url = $reg ]] && return 1
+
+    if [[ $url =~ http(s|)://*.* ]]
+    then
+        read -r tmpfilename _ < <(md5sum <<< "$url")
+        localhtml=${cachedir}/${tmpfilename}.html
+        onlinehtml=${cachedir}/${tmpfilename}_new.html
+        localascii=${cachedir}/${tmpfilename}.txt
+        onlineascii=${cachedir}/${tmpfilename}_new.txt
+        difftxt=${diffdir}/${tmpfilename}_diff.txt
+
+        # Get html (only body) via wget and awk.
+         awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' < <(wget $output -t 2 --no-http-keep-alive --no-cache --no-cookies --ignore-length --content-on-error -L -E -O - "$url") > "$onlinehtml"
+
+        # If download has been successfull, convert html into text via w3m.
+        if [[ -s $onlinehtml ]]
+        then
+            w3m -dump -T text/html > "$onlineascii" < "$onlinehtml"
+        else
+            rm -- "$onlinehtml"
+            { printf '%s\n' "FAIL $(date +%Y-%m-%d_%H:%M) URL: ${url} unattainable" >&3 ; return 1 ; }
+        fi
+
+        # Prepare files from last session.
+        [[ ! -e $localhtml ]] && { cp -- "$onlinehtml" "$localhtml" ; }
+        [[ ! -e $localascii ]] && { cp -- "$onlineascii" "$localascii" ; }
+
+        # If there is a difference between "online-file" and "local-file",
+        # make a detailed diff. In either case make a status update.
+        if ! cmp -s "$onlineascii" "$localascii"
+        then
+            __urldiff_diff
+            { printf '%s\n' "NEW $(date +%Y-%m-%d_%H:%M) URL: ${url}" "    file://${difftxt}"  "    file://${localhtml}" "    file://${localascii}" ; } >&3
+        else
+            printf '%s\n' "OLD $(date +%Y-%m-%d_%H:%M) URL: ${url}" >&3
+        fi
+
+        # In the end cleaning up.
+        rm -- "$localhtml" "$localascii"
+        mv -- "$onlinehtml" "$localhtml"
+        mv -- "$onlineascii" "$localascii"
+
+    else
+        { printf '%s\n' "FAIL $(date +%Y-%m-%d_%H:%M) URL: ${url} does not match" >&3 ; return 1 ; }
+    fi
+}
+
+# --- MAIN.
+
+export -f \
+           __urldiff_check \
+           __urldiff_diff
+
+declare -x \
+            cachedir=${urldiffdir}/cache \
+            diffdir=${urldiffdir}/diff \
+            output=
+
+declare mail=
 
 # Check connection status.
-if ! ping -c1 startpage.com > /dev/null 2>&1
+if ! ping -c1 google.com >/dev/null 2>&1
 then
-    if ! wget -O - startpage.com > /dev/null 2>&1
+    if ! wget -O - google.com > /dev/null 2>&1
     then
         # We are probably offline.
-        { echo "ERROR We are probably offline." >&2 ; exit 1 ; }
+        { echo "ERROR We are probably offline." >&2 ; exit 79 ; }
     fi
 fi
 
-# Get arguments.
-while true
+# Get arguments without getopts.
+while :
 do
     case ${1#-} in
         q|quiet)
-                export output=-q
+                output=-q
                 shift 1
                 continue
                 ;;
         nv|no-verbose)
-                export output=-nv
+                output=-nv
                 shift 1
                 continue
                 ;;
         vb|verbose)
-                export output=-v
+                output=-v
                 shift 1
                 continue
                 ;;
         m|mail)
-                mail=true
+                mail=sendmail
                 shift 1
                 mailto=${*-$mailto}
                 shift "$#"
                 continue
                 ;;
         h|help)
-                _help
+                __urldiff_help
                 exit 0
                 ;;
         v|version)
-                { echo "0.1.0.0" >&2 ; exit 0 ; }
+                __urldiff_version
+                exit 0
                 ;;
         *)
                 break
@@ -172,20 +207,20 @@ do
 done
 
 # If there is no output specified, use "verbose".
-output=${output-"-v"}
+output=${output:-"-v"}
 
 # Check, if dirs have been created.
-[[ ! -d $diffdir ]] && mkdir -p "$diffdir"
-[[ ! -d $cachedir ]] && mkdir -p "$cachedir"
+[[ ! -d $diffdir ]] && mkdir -p -- "$diffdir"
+[[ ! -d $cachedir ]] && mkdir -p -- "$cachedir"
 
 # Rename diffs from last session.
-find "$diffdir" -name "*.txt" -execdir rename -f 's/_diff\.txt$/_diff_old\.txt/' {} ";"
+find -H "$diffdir" -name "*.txt" -execdir rename -f 's/_diff\.txt$/_diff_old\.txt/' {} +
 
 # Here we go.
 if [[ ! -e $urllist ]]
 then
     # Exit, if there is no url list.
-    { echo "ERROR No url list to look for." >&2 ; exit 2 ; }
+    { echo "ERROR No url list to look for." >&2 ; exit 80 ; }
 else
     # Print first header, if specified.
     [[ $output =~ (-nv|-v) ]] && { tput bold setaf 7 ; printf '%s\n' 'Checking...' ; tput sgr0 ; }
@@ -193,28 +228,30 @@ else
     # Read url list, open $reportnew as output via exec and call via
     # xargs functions to get html and to make diff.
     exec 3>>"$reportnew"
-    xargs -a "$urllist" -n 1 -P 16 -i bash -c '_check $@' _ {} \;
+    xargs -a "$urllist" -n 1 -P 16 -i bash -c '__urldiff_check $@' _ {} +
     exec 3<&-
 
     # Do some post processing.
     if [[ ! -e $reportold ]]
     then
-        cp "$reportnew" "$reportold"
+        cp -- "$reportnew" "$reportold"
     else
         sed -i 's/_diff.txt/_diff_old.txt/g' "$reportold"
     fi
 
     # If specified, print header and report to stdout.
-    [[ $output =~ (-nv|-v) ]] &&
+    [[ $output != -q ]] &&
     {
         tput bold setaf 7 ; printf '%s\n' 'Report' ; tput sgr0
         sed -n 'p' "$reportnew"
     }
 
     # If specified, mail report as body.
-    [[ $mail = true ]] && mail -s "[URLDIFF] Report" $mailto < "$reportnew"
+    [[ $mail == sendmail ]] && mail -s "[URLDIFF] Report" "$mailto" < "$reportnew"
 
     # In the end cleaning up.
-    rm "$reportold"
-    mv "$reportnew" "$reportold"
+    rm -- "$reportold"
+    mv -- "$reportnew" "$reportold"
 fi
+
+exit 0

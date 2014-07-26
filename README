@@ -55,7 +55,7 @@ ARGUMENTS
        MAILTO Something like: user@example.org
 
 EXAMPLES
-       To print Report:
+       To print the Report:
               urldiff
               urldiff -nv
 
@@ -67,9 +67,9 @@ EXAMPLES
               urldiff -vb -m
 
 RETURN VALUES
-       1      ERROR We are probably offline.
+      79      ERROR We are probably offline.
 
-       2      ERROR No url list to look for.
+      80      ERROR No url list to look for.
 
 NOTES
        ·   You can write all commands and options without masking -. So,
@@ -77,17 +77,17 @@ NOTES
 
        ·   Urls in the url list need to be seperated by newline.
 
-       ·   To check the connection status, <startpage.com> will be
-           pinged. If you do not like it, modify it please.
+       ·   To check the connection status, <google.com> will be
+           pinged. If you do not like that, modify it please.
 
 CONFIGURATION
-       Set following variables in the second section of the script:
+       Set following variables in the third section of the script:
               urldiffdir=DIR (needed)
               urllist=FILE (needed)
               mailto=<MAILTO> (optional)
 
        Configure your favourite diff-programm in the function called
-       _diff().
+       __urldiff_diff().
 
 BUGS & REQUESTS
        Report it on <https://github.com/D630/urldiff>
@@ -106,4 +106,4 @@ SEE ALSO
        mailx(1), md5sum(1), mkdir(1), mv(1), ping(1), rename(1), rm(1),
        sed(1), tput(1), w3m(1), wdiff(1), wget(1), xargs(1)
 
-0.1.0.0                      2014-02-12                       URLDIFF(1)
+0.1.1.0                      2014-07-26                       URLDIFF(1)
