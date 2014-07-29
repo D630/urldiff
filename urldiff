@@ -53,7 +53,7 @@ declare -r \
 
 # --- FUNCTIONS.
 
-__urldiff_version() { echo "0.1.1.0" ; }
+__urldiff_version() { echo "0.1.1.1" ; }
 
 __urldiff_help()
 {
@@ -109,7 +109,7 @@ __urldiff_check()
         difftxt=${diffdir}/${tmpfilename}_diff.txt
 
         # Get html (only body) via wget and awk.
-         awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' < <(wget $output -t 2 --no-http-keep-alive --no-cache --no-cookies --ignore-length --content-on-error -L -E -O - "$url") > "$onlinehtml"
+         awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' < <(wget $output -t 1 --no-http-keep-alive --no-cache --no-cookies --ignore-length --content-on-error -L -E -O - "$url") > "$onlinehtml"
 
         # If download has been successfull, convert html into text via w3m.
         if [[ -s $onlinehtml ]]
