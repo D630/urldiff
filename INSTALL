@@ -1,2 +1,0 @@
-1. gzip urldiff.1 and cp it to /usr/share/man/man1/urldiff.1
-2. make urldiff executable and cp it to /usr/local/bin or $HOME/bin
