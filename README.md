@@ -20,9 +20,9 @@ This is an adaption of the [activity-monitor](https://github.com/cmichi/activity
 #### Requirement
 
 Explicitly required:
-awk, bash, cmp, cp, diff, find, mailx, md5sum, mkdir, mv, ping, rename, rm, sed, tput, w3m, wget, xargs
+`awk, bash, cmp, cp, diff, find, mailx, md5sum, mkdir, mv, ping, rename, rm, sed, tput, w3m, wget, xargs`
 
-Optional: dwdiff, wdiff
+Optional: `dwdiff, wdiff`
 
 #### Options
 
