@@ -55,7 +55,7 @@ URLDIFF_MAILTO
                         Default: ${USER}@${HOST}
 ```
 
-##### OPTIONS
+###### OPTIONS
 
 ```
 -h, --help
@@ -78,18 +78,18 @@ URLDIFF_MAILTO
         Print current version of urldiff(1).
 ```
 
-##### ARGUMENTS
+###### ARGUMENTS
 
 ```
 <MAILTO>
         Something like: foo@bar.org
 ```
 
-#### CONFIGURATIONS
+###### CONFIGURATIONS
 
 Configure your favourite diff command in the function called `Urldiff::Diff`. To test the connection, modify `Urldiff::CheckConnection` (per default, debian.org will be pinged).
 
-##### EXAMPLES
+###### EXAMPLES
 
 To print the report:
 
