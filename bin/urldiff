@@ -235,7 +235,7 @@ Urldiff::Main ()
 
         # Rename diffs from last session.
         command find -H "$diffdir" -name "*.txt" \
-                -execdir rename -f 's/_diff\.txt$/_diff_old\.txt/' {} +
+                -exec rename -f 's/_diff\.txt$/_diff_old\.txt/' {} +
 
         if
                 [[ -e $urllist ]]
@@ -279,7 +279,7 @@ Urldiff::Main ()
         fi
 }
 
-Urldiff::Version () { builtin printf 'v%s\n' "0.2.0" ; }
+Urldiff::Version () { builtin printf 'v%s\n' "0.2.1" ; }
 
 # -- MAIN.
 
