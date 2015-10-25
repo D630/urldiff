@@ -29,7 +29,7 @@ git clone https://github.com/D630/urldiff
 In order to use the latest tagged version, do also something like this:
 
 ```
-cd ./urldiff
+cd -- ./urldiff
 git checkout $(git describe --abbrev=0 --tags)
 ```
 
@@ -118,7 +118,7 @@ urldiff has been written in [GNU bash](http://www.gnu.org/software/bash/) on [De
 - GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.3, GNU MP 6.0.0)
 - GNU Wget 1.16.3
 - GNU bash 4.3.42(1)-release
-- GNU coreutils 8.23: cp, date, md5sum, mkdir, mv, rm
+- GNU coreutils 8.23: cp, md5sum, mkdir, mv, rm
 - GNU findutils 4.4.2: find, xargs
 - Heirloom mailx 12.5
 - diffutils 3.3: cmp, diff
