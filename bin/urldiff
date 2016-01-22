@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2014f. D630
+# Copyright (C) 2014ff. D630
 # <https://github.com/D630/urldiff>
 #
 # -- DEBUGGING.
@@ -29,10 +29,18 @@
 
 Urldiff::CheckConnection ()
 {
-        command ping -c1 debian.org >/dev/null 2>&1 ||
-        command wget -O - debian.org >/dev/null 2>&1 || {
-                builtin printf '%s\n' "ERROR We are probably offline" 1>&2
-                builtin exit 79
+        command ping -qnc2 -w10  debian.org 1>/dev/null 2>&1 ||
+        command ping -qnc1 -w4 8.8.8.8 1>/dev/null 2>&1 ||
+        command nc -vz www.debian.org 80 1>/dev/null 2>&1 || {
+                if
+                        exec 3<>/dev/udp/debian.org/80
+                then
+                        exec 3<&-
+                        exec 3>&-
+                else
+                        builtin printf '%s\n' "ERROR We are probably offline" 1>&2
+                        builtin exit 79
+                fi
         }
 }
 
@@ -67,13 +75,18 @@ Urldiff::CheckUrl ()
                 command awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' \
                         < <(
                                 command wget ${output} \
-                                        -t 1 \
-                                        --no-http-keep-alive \
+                                        --connect-timeout=3 \
+                                        --content-on-error \
+                                        --dns-timeout=3 \
+                                        --ignore-length \
+                                        --inet4-only \
                                         --no-cache \
                                         --no-cookies \
-                                        --ignore-length \
-                                        --content-on-error \
-                                        -L -E -O - "$url"
+                                        --no-http-keep-alive \
+                                        --read-timeout=3 \
+                                        --tries=1 \
+                                        -O - \
+                                        "$url";
                 ) > "$onlinehtml"
 
                 if
@@ -236,7 +249,7 @@ Urldiff::Main ()
         then
                 [[ $output =~ (-nv|-v) ]] && {
                         command tput bold setaf 7
-                        builtin printf '%s\n' 'Checking ...'
+                        builtin printf '%s\n' 'Checking ...' 1>&2
                         command tput sgr0
                 }
 
@@ -255,7 +268,7 @@ Urldiff::Main ()
 
                 [[ $output == -q ]] || {
                         command tput bold setaf 7
-                        builtin printf '%s\n' 'Report'
+                        builtin printf '%s\n' 'Report' 1>&2
                         command tput sgr0
                         command sed -n 'p' "$reportnew"
                 }
@@ -273,7 +286,7 @@ Urldiff::Main ()
         fi
 }
 
-Urldiff::Version () { builtin printf 'v%s\n' "0.2.2" ; }
+Urldiff::Version () { builtin printf 'v%s\n' "0.2.3" ; }
 
 # -- MAIN.
 

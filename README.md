@@ -1,6 +1,6 @@
 ##### README
 
-[urldiff](https://github.com/d630/urldiff) is a simple bash shell script to notify and watch changes on websites, that do not provide Atom or RSS-Feed. After reading an url list, downloading and comparision of "local" and "online" a little status report will be generated. The status is constructed like this:
+[urldiff](https://github.com/d630/urldiff) is a simple bash shell script to notify and watch changes on websites, that do not provide Atom or RSS-Feed. After reading an url list, downloading and comparision of "local" and "online" a short status report will be generated. The status is constructed like this:
 
 ```
 FAIL 2014-02-12_15:43 URL: $url unattainable
@@ -115,18 +115,19 @@ urldiff -vb -m
 
 urldiff has been written in [GNU bash](http://www.gnu.org/software/bash/) on [Debian GNU/Linux 9 (stretch/sid)](https://www.debian.org) using these programs/packages:
 
-- GNU Awk 4.1.1, API: 1.1 (GNU MPFR 3.1.3, GNU MP 6.0.0)
-- GNU Wget 1.16.3
+- GNU Awk 4.1.3, API: 1.1 (GNU MPFR 3.1.3-p5, GNU MP 6.1.0)
+- GNU Wget 1.17.1
 - GNU bash 4.3.42(1)-release
 - GNU coreutils 8.23: cp, md5sum, mkdir, mv, rm
 - GNU findutils 4.4.2: find, xargs
 - Heirloom mailx 12.5
+- OpenBSD netcat (Debian patchlevel 1.105-7)
 - diffutils 3.3: cmp, diff
 - iputils-121221: ping
-- ncurses 6.0.20150810: tput
+- ncurses 6.0.20151024: tput
 - perl v5.20.2: rename
 - sed (GNU sed) 4.2.2
-- w3m/0.5.3+git20150811
+- w3m/0.5.3+git20151119
 
 ##### CREDITS
 
