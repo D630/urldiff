@@ -27,269 +27,247 @@
 
 # -- FUNCTIONS.
 
-Urldiff::CheckConnection ()
-{
-        command ping -qnc2 -w10  debian.org 1>/dev/null 2>&1 ||
-        command ping -qnc1 -w4 8.8.8.8 1>/dev/null 2>&1 ||
-        command nc -vz www.debian.org 80 1>/dev/null 2>&1 || {
-                if
-                        exec 3<>/dev/udp/debian.org/80
-                then
-                        exec 3<&-
-                        exec 3>&-
-                else
-                        builtin printf '%s\n' "ERROR We are probably offline" 1>&2
-                        builtin exit 79
-                fi
-        }
-}
-
-Urldiff::CheckUrl ()
-{
-        builtin typeset \
-                difftxt \
-                localascii \
-                localhtml \
-                onlineascii \
-                onlinehtml \
-                reg="#*" \
-                tmpfilename \
-                url="$1" ;
-
-        [[ $url == $reg ]] && builtin return 1
-
+function Urldiff::CheckConnection {
+    command ping -qnc2 -w10  debian.org 1>/dev/null 2>&1 ||
+    command ping -qnc1 -w4 8.8.8.8 1>/dev/null 2>&1 ||
+    command nc -vz www.debian.org 80 1>/dev/null 2>&1 ||
         if
-                [[ $url =~ https?://*.* ]]
+            exec 3<>/dev/udp/debian.org/80;
         then
-                builtin read -r tmpfilename _ < <(
-                        command md5sum <<< "$url"
-                )
-
-                localhtml=${cachedir}/${tmpfilename}.html
-                onlinehtml=${cachedir}/${tmpfilename}_new.html
-                localascii=${cachedir}/${tmpfilename}.txt
-                onlineascii=${cachedir}/${tmpfilename}_new.txt
-                difftxt=${diffdir}/${tmpfilename}_diff.txt
-
-                # Get html (only body) via wget and awk.
-                command awk '/\<body/ {flag=1;next} /\<\/body\>/{flag=0} flag { print }' \
-                        < <(
-                                command wget ${output} \
-                                        --connect-timeout=3 \
-                                        --content-on-error \
-                                        --dns-timeout=3 \
-                                        --ignore-length \
-                                        --inet4-only \
-                                        --no-cache \
-                                        --no-cookies \
-                                        --no-http-keep-alive \
-                                        --read-timeout=3 \
-                                        --tries=1 \
-                                        -O - \
-                                        "$url";
-                ) > "$onlinehtml"
-
-                if
-                        [[ -s $onlinehtml ]]
-                then
-                        command w3m -dump -T text/html > "$onlineascii" < "$onlinehtml"
-                else
-                        command rm -- "$onlinehtml"
-                        builtin printf 'FAIL %(%Y-%m-%d_%H:%M)T URL: %s unattainable\n' -1 "$url" 1>&3
-                        builtin return 1
-                fi
-
-                # Prepare files from last session.
-                [[ -e $localhtml ]] || {
-                        command cp -- "$onlinehtml" "$localhtml"
-                }
-
-                [[ -e $localascii ]] || {
-                        command cp -- "$onlineascii" "$localascii"
-                }
-
-                if
-                        command cmp -s "$onlineascii" "$localascii"
-                then
-                        builtin printf 'OLD %(%Y-%m-%d_%H:%M)T URL: %s\n' -1 "$url" 1>&3
-                else
-                        Urldiff::Diff
-                        builtin printf 'NEW %(%Y-%m-%d_%H:%M)T URL: %s\n\tfile://%s\n\tfile://%s\n\tfile://%s\n' -1 \
-                                "$url" \
-                                "$difftxt"  \
-                                "$localhtml" \
-                                "$localascii" 1>&3
-                fi
-
-                command mv -- "$onlinehtml" "$localhtml"
-                command mv -- "$onlineascii" "$localascii"
+            exec 3<&-;
+            exec 3>&-;
         else
-                builtin printf 'FAIL %(%Y-%m-%d_%H:%M)T URL: %s does not match' -1 "$url" 1>&3
-                builtin return 1
-        fi
-}
+            printf 'ERROR We are probably offline\n' 1>&2;
+            exit 79;
+        fi;
+};
 
-Urldiff::Diff ()
-{
-    command diff -U 0 -iEZbwB "$localascii" "$onlineascii" > "$difftxt"
-    #command dwdiff -1 --aggregate-changes --wdiff-output "$localascii" "$onlineascii" > "$difftxt"
-    #command wdiff -1 "$localascii" "$onlineascii" > "$difftxt"
-}
+function Urldiff::CheckUrl {
+    typeset \
+        difftxt \
+        localascii \
+        localhtml \
+        onlineascii \
+        onlinehtml \
+        reg='#*' \
+        tmpfilename \
+        url=$1;
 
-Urldiff::Help ()
-{
-        {
-                builtin typeset help="$(</dev/fd/0)"
-        } <<'HELP'
+    [[ $url == $reg ]] &&
+        return 1;
+
+    [[ $url =~ https?://*.* ]] || {
+        printf 'FAIL %(%Y-%m-%d_%H:%M)T URL: %s does not match' -1 "$url" 1>&3;
+        return 1;
+    };
+
+    read -r tmpfilename _ < <(command md5sum <<< "$url");
+
+    localhtml=$cachedir/$tmpfilename.html \
+    onlinehtml=$cachedir/${tmpfilename}_new.html \
+    localascii=$cachedir/$tmpfilename.txt \
+    onlineascii=$cachedir/${tmpfilename}_new.txt \
+    difftxt=$diffdir/${tmpfilename}_diff.txt;
+
+    # Get html (only body) via wget and awk.
+    command wget $output \
+        --connect-timeout=3 \
+        --content-on-error \
+        --dns-timeout=3 \
+        --ignore-length \
+        --inet4-only \
+        --no-cache \
+        --no-cookies \
+        --no-http-keep-alive \
+        --read-timeout=3 \
+        --tries=1 \
+        -O - \
+        "$url" |
+    command awk '
+        /\<body/ {
+            flag=1;
+            next
+        };
+        /\<\/body\>/ { flag=0 };
+        flag { print };
+    ' > "$onlinehtml";
+
+    if
+        [[ -s $onlinehtml ]];
+    then
+        command w3m -dump -T text/html > "$onlineascii" < "$onlinehtml";
+    else
+        command rm -- "$onlinehtml";
+        printf 'FAIL %(%Y-%m-%d_%H:%M)T URL: %s unattainable\n' -1 "$url" 1>&3;
+        return 1;
+    fi;
+
+    # Prepare files from last session.
+    [[ -e $localhtml ]] ||
+        command cp -- "$onlinehtml" "$localhtml";
+
+    [[ -e $localascii ]] ||
+        command cp -- "$onlineascii" "$localascii";
+
+    if
+        command cmp -s -- "$onlineascii" "$localascii";
+    then
+        printf 'OLD %(%Y-%m-%d_%H:%M)T URL: %s\n' -1 "$url" 1>&3;
+    else
+        Urldiff::Diff;
+        printf 'NEW %(%Y-%m-%d_%H:%M)T URL: %s\n\tfile://%s\n\tfile://%s\n\tfile://%s\n' -1 \
+            "$url" \
+            "$difftxt"  \
+            "$localhtml" \
+            "$localascii" 1>&3;
+    fi;
+
+    command mv -- "$onlinehtml" "$localhtml";
+    command mv -- "$onlineascii" "$localascii";
+};
+
+function Urldiff::Diff {
+    command diff -U 0 -iEZbwB "$localascii" "$onlineascii" > "$difftxt";
+    #command dwdiff -1 --aggregate-changes --wdiff-output "$localascii" "$onlineascii" > "$difftxt";
+    #command wdiff -1 "$localascii" "$onlineascii" > "$difftxt";
+};
+
+function Urldiff::Help {
+    { typeset help=$(</dev/fd/0); } <<'HELP'
 Usage
-        urldiff [ -h | -v ] [ -nv | -nv | -q ] [ -m ]
+    urldiff [ -h | -v ] [ -nv | -nv | -q ] [ -m ]
 
 Options
-        -h,  --help
-        -m,  --mail             [ <MAILTO> ... ]
-        -nv, --no-verbose
-        -q,  --quiet
-        -vb, --verbose
-        -v,  --version
+    -h,  --help
+    -m,  --mail             [ <MAILTO> ... ]
+    -nv, --no-verbose
+    -q,  --quiet
+    -vb, --verbose
+    -v,  --version
 
 Arguments
-        <MAILTO>                Something like: foo@bar.org
+    <MAILTO>                Something like: foo@bar.org
 
 Environment variables
-        URLDIFF_DATA
-                                Default:
-                                ${XDG_DATA_HOME:-${HOME}/.local/share}/urldiff
-        URLDIFF_MAILTO
-                                Default: ${USER}@${HOST}
+    URLDIFF_DATA
+                            Default:
+                            ${XDG_DATA_HOME:-$HOME/.local/share}/urldiff
+    URLDIFF_MAILTO
+                            Default: $USER@$HOST
 HELP
 
-        builtin printf '%s\n' "$help"
-}
+    printf %s\\n "$help";
+};
 
-Urldiff::Main ()
-{
-        builtin typeset -r mailto=${URLDIFF_MAILTO:-${USER}@${HOST}}
+function Urldiff::Main {
+    typeset -r mailto=${URLDIFF_MAILTO:-$USER@$HOST};
+    typeset -i mail=;
+    typeset -x output;
 
-        builtin typeset -i mail=
+    while
+        :;
+    do
+        case ${1#-} in
+        (q|-quiet)
+            output=-q;
+            shift 1;
+            continue;;
+        (nv|-no-verbose)
+            output=-nv;
+            shift 1;
+            continue;;
+        (vb|-verbose)
+            output=-v;
+            shift 1;
+            continue;;
+        (m|-mail)
+            mail=1;
+            shift 1;
+            mailto=${*-$mailto};
+            shift $#;
+            continue;;
+        (h|-help)
+            Urldiff::Help;
+            exit 0;;
+        (v|-version)
+            Urldiff::Version;
+            exit 0;;
+        (*)
+            break;;
+        esac;
+    done;
 
-        builtin typeset -x output
+    Urldiff::CheckConnection;
 
-        while
-                builtin :
-        do
-                case ${1#-} in
-                q|-quiet)
-                        output=-q
-                        builtin shift 1
-                        builtin continue
-                ;;
-                nv|-no-verbose)
-                        output=-nv
-                        builtin shift 1
-                        builtin continue
-                ;;
-                vb|-verbose)
-                        output=-v
-                        builtin shift 1
-                        builtin continue
-                ;;
-                m|-mail)
-                        mail=1
-                        builtin shift 1
-                        mailto=${*-${mailto}}
-                        builtin shift "$#"
-                        builtin continue
-                ;;
-                h|-help)
-                        Urldiff::Help
-                        builtin exit 0
-                ;;
-                v|-version)
-                        Urldiff::Version
-                        builtin exit 0
-                ;;
-                *)
-                        builtin break
-                esac
-        done
+    typeset -r predir_datadir=${XDG_DATA_HOME:-$HOME/.local/share};
+    typeset -r urldiffdir=${URLDIFF_DATA:-$predir_datadir/urldiff};
+    typeset -r \
+        reportnew=$urldiffdir/report_new.txt \
+        reportold=$urldiffdir/report.txt \
+        urllist=$urldiffdir/urls.txt;
 
-        Urldiff::CheckConnection
+    typeset -rx \
+        cachedir=$urldiffdir/cache \
+        diffdir=$urldiffdir/diff;
 
-        builtin typeset -r predir_datadir=${XDG_DATA_HOME:-${HOME}/.local/share}
+    typeset -fx \
+        Urldiff::CheckUrl \
+        Urldiff::Diff;
 
-        builtin typeset -r urldiffdir=${URLDIFF_DATA:-${predir_datadir}/urldiff}
+    output=${output:-\-v};
 
-        builtin typeset -r \
-                reportnew=${urldiffdir}/report_new.txt \
-                reportold=${urldiffdir}/report.txt \
-                urllist=${urldiffdir}/urls.txt ;
+    [[ -d $diffdir ]] ||
+        command mkdir -p -- "$diffdir";
+    [[ -d $cachedir ]] ||
+        command mkdir -p -- "$cachedir";
+    [[ -f $urllist ]] ||
+            printf %s\\n '#http://foo.bar' > "$urllist";
 
-        builtin typeset -rx \
-                cachedir=${urldiffdir}/cache \
-                diffdir=${urldiffdir}/diff ;
+    # Rename diffs from last session.
+    command find -H "$diffdir" -name '*.txt' \
+            -exec rename -f 's/_diff\.txt$/_diff_old\.txt/' {} +;
 
-        builtin typeset -fx \
-                Urldiff::CheckUrl \
-                Urldiff::Diff ;
+    [[ -e $urllist ]] || {
+        printf %s\\n 'ERROR No url list to look for' 1>&2;
+        exit 80;
+    };
 
-        output=${output:-\-v}
+    [[ $output =~ (-nv|-v) ]] && {
+        command tput bold setaf 7;
+        printf 'Checking ...\n' 1>&2;
+        command tput sgr0;
+    };
 
-        [[ -d $diffdir ]] || command mkdir -p -- "$diffdir"
-        [[ -d $cachedir ]] || command mkdir -p -- "$cachedir"
-        [[ -f $urllist ]] || {
-                builtin printf '%s\n' '#http://foo.bar' > "$urllist"
-        }
+    exec 3>>"$reportnew";
+    command xargs -a "$urllist" -n 1 -P 8 \
+            -i bash -c 'Urldiff::CheckUrl "$@"' _ {} +;
+    exec 3<&-;
 
-        # Rename diffs from last session.
-        command find -H "$diffdir" -name "*.txt" \
-                -exec rename -f 's/_diff\.txt$/_diff_old\.txt/' {} +
+    if
+        [[ -e $reportold ]];
+    then
+        command sed -i 's/_diff.txt/_diff_old.txt/g' "$reportold";
+    else
+        command cp -- "$reportnew" "$reportold";
+    fi;
 
-        if
-                [[ -e $urllist ]]
-        then
-                [[ $output =~ (-nv|-v) ]] && {
-                        command tput bold setaf 7
-                        builtin printf '%s\n' 'Checking ...' 1>&2
-                        command tput sgr0
-                }
+    [[ $output == -q ]] || {
+        command tput bold setaf 7;
+        printf 'Reporting ...\n' 1>&2;
+        command tput sgr0;
+        command sed -n p "$reportnew";
+    };
 
-                exec 3>>"$reportnew"
-                command xargs -a "$urllist" -n 1 -P 8 \
-                        -i bash -c 'Urldiff::CheckUrl "$@"' _ {} +
-                exec 3<&-
+    ((mail)) &&
+        command mail -s "[URLDIFF] Report" "$mailto" < "$reportnew";
 
-                if
-                        [[ -e $reportold ]]
-                then
-                        command sed -i 's/_diff.txt/_diff_old.txt/g' "$reportold"
-                else
-                        command cp -- "$reportnew" "$reportold"
-                fi
+    command mv -- "$reportnew" "$reportold";
+};
 
-                [[ $output == -q ]] || {
-                        command tput bold setaf 7
-                        builtin printf '%s\n' 'Report' 1>&2
-                        command tput sgr0
-                        command sed -n 'p' "$reportnew"
-                }
-
-                (( mail )) && {
-                        command mail -s \
-                                "[URLDIFF] Report" "$mailto" \
-                        < "$reportnew"
-                }
-
-                command mv -- "$reportnew" "$reportold"
-        else
-                builtin printf '%s\n' "ERROR No url list to look for" 1>&2
-                builtin exit 80
-        fi
-}
-
-Urldiff::Version () { builtin printf 'v%s\n' "0.2.3" ; }
+function Urldiff::Version { printf %s\\n 0.2.3; };
 
 # -- MAIN.
 
-Urldiff::Main "$@"
+Urldiff::Main "$@";
 
-# vim: set ts=8 sw=8 tw=0 et :
+# vim: set ts=4 sw=4 tw=0 et :
