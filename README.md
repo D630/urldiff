@@ -1,6 +1,9 @@
 ##### README
 
-[urldiff](https://github.com/d630/urldiff) is a simple bash shell script to notify and watch changes on websites, that do not provide Atom or RSS-Feed. After reading an url list, downloading and comparision of "local" and "online" a short status report will be generated. The status is constructed like this:
+[urldiff](https://github.com/d630/urldiff) is a simple bash shell script to
+notify and watch changes on websites, that do not provide Atom or RSS-Feed.
+After reading an url list, downloading and comparision of "local" and "online"
+a short status report will be generated. The status is constructed like this:
 
 ```
 FAIL 2014-02-12_15:43 URL: $url unattainable
@@ -16,7 +19,8 @@ Urls in the url list need to be seperated by newline.
 
 ##### BUGS & REQUESTS
 
-Please feel free to open an issue or put in a pull request on https://github.com/D630/urldiff
+Please feel free to open an issue or put in a pull request on
+https://github.com/D630/urldiff
 
 ##### GIT
 
@@ -50,9 +54,9 @@ urldiff [ -h | -v ] [ -nv | -nv | -q ] [ -m ]
 ```
 URLDIFF_DATA
                         Default:
-                        ${XDG_DATA_HOME:-${HOME}/.local/share}/urldiff
+                        ${XDG_DATA_HOME:-$HOME/.local/share}/urldiff
 URLDIFF_MAILTO
-                        Default: ${USER}@${HOST}
+                        Default: $USER@$HOST
 ```
 
 ###### OPTIONS
@@ -87,7 +91,9 @@ URLDIFF_MAILTO
 
 ###### CONFIGURATIONS
 
-Configure your favourite diff command in the function called `Urldiff::Diff`. To test the connection, modify `Urldiff::CheckConnection` (per default, debian.org will be pinged).
+Configure your favourite diff command in the function called `Urldiff::Diff`.
+To test the connection, modify `Urldiff::CheckConnection` (per default,
+debian.org will be pinged).
 
 ###### EXAMPLES
 
@@ -113,21 +119,23 @@ urldiff -vb -m
 
 ##### NOTICE
 
-urldiff has been written in [GNU bash](http://www.gnu.org/software/bash/) on [Debian GNU/Linux 9 (stretch/sid)](https://www.debian.org) using these programs/packages:
+urldiff has been written in [GNU bash](http://www.gnu.org/software/bash/) on
+[Debian GNU/Linux stretch/sid (4.9.6-3 x86-64)](https://www.debian.org) using
+the following programs/packages:
 
-- GNU Awk 4.1.3, API: 1.1 (GNU MPFR 3.1.3-p5, GNU MP 6.1.0)
-- GNU Wget 1.17.1
-- GNU bash 4.3.42(1)-release
-- GNU coreutils 8.23: cp, md5sum, mkdir, mv, rm
-- GNU findutils 4.4.2: find, xargs
-- Heirloom mailx 12.5
-- OpenBSD netcat (Debian patchlevel 1.105-7)
-- diffutils 3.3: cmp, diff
-- iputils-121221: ping
-- ncurses 6.0.20151024: tput
-- perl v5.20.2: rename
-- sed (GNU sed) 4.2.2
-- w3m/0.5.3+git20151119
+- GNU Awk 4.1.4, API: 1.1 (GNU MPFR 3.1.5, GNU MP 6.1.2)
+- GNU Wget 1.18
+- GNU bash 4.4.11(1)-release
+- GNU coreutils 8.26: cat, cp, md5sum, mkdir, mv, rm
+- GNU diffutils 3.5: cmp, diff
+- GNU ed 1.10
+- GNU findutils 4.7.0-git: find, xargs
+- OpenBSD netcat (Debian patchlevel 1.130-2)
+- bsd-mailx (8.1.2-0.20160123cvs-3)
+- iputils-s20161105: ping
+- ncurses 6.0.20161126: tput
+- perl v5.20.2: File::Rename (0.20)
+- w3m/0.5.3+git20170102
 
 ##### CREDITS
 
